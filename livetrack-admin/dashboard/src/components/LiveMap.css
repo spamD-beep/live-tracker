@@ -21,6 +21,64 @@
   padding: 4px;
 }
 
+.fallback-map {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e0f2fe, #ecfdf5);
+}
+
+.fallback-map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, .08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, .08) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.fallback-marker {
+  position: absolute;
+  min-width: 132px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  padding: 9px 10px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .18);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fallback-marker span {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%) rotate(45deg);
+  background: #fff;
+}
+
+.fallback-marker b,
+.fallback-marker small {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.fallback-marker small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.fallback-marker.selected {
+  outline: 3px solid #3478dc;
+}
+
 .device-pin span {
   position: relative;
   display: grid;

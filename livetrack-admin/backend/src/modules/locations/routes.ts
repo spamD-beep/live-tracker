@@ -9,8 +9,8 @@ export const locationsRouter = Router(); locationsRouter.use(authenticate);
 const allowed = async (deviceId:string,u:NonNullable<Express.Request["user"]>) => prisma.device.findFirst({where:{id:deviceId,...(u.role==="ADMIN"?{}:{userId:u.id})}});
 async function ingest(data:z.infer<typeof locationSchema>,user:NonNullable<Express.Request["user"]>){
   const device=await allowed(data.deviceId,user); if(!device)throw Object.assign(new Error("Device not found or not authorized"),{status:403});
-  const location=await prisma.$transaction(async tx=>{const l=await tx.location.create({data});await tx.device.update({where:{id:data.deviceId},data:{lastSeenAt:new Date()}});return l;});
-  broadcast("device:location",{...location,device:{id:device.id,deviceName:device.deviceName},status:"ONLINE",demo:false}); broadcast("device:online",{deviceId:device.id}); return location;
+  const location=await prisma.$transaction(async tx=>{const l=await tx.location.upsert({where:{clientLocationId:data.clientLocationId},create:data,update:{}});await tx.device.update({where:{id:data.deviceId},data:{lastSeenAt:new Date(),isTracking:true}});return l;});
+  broadcast("device:location",{...location,device:{id:device.id,deviceName:device.deviceName},status:"ONLINE"}); broadcast("device:online",{deviceId:device.id}); return location;
 }
 locationsRouter.post("/",async(req,res)=>{const location=await ingest(locationSchema.parse(req.body),req.user!);res.status(201).json(location);});
 locationsRouter.post("/batch",async(req,res)=>{const items=z.array(locationSchema).min(1).max(100).parse(req.body);const locations=[];for(const item of items)locations.push(await ingest(item,req.user!));res.status(201).json({locations});});

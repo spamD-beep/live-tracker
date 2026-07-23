@@ -52,12 +52,6 @@
   background: #ffffffdc;
 }
 
-.app:not(.dark) .demo-pill {
-  border-color: #b8d0ee;
-  background: #eaf3ff;
-  color: #2c67ba;
-}
-
 .app:not(.dark) .device-icon {
   background: #e7f0fc;
   color: #3478dc;
@@ -121,12 +115,6 @@
 
 .app.dark header {
   background: #07162ddd;
-}
-
-.app.dark .demo-pill {
-  border-color: #2d5685;
-  background: #102c52;
-  color: #8fc0ff;
 }
 
 .app.dark .device-icon {

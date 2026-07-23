@@ -14,16 +14,16 @@ copy backend\.env.example backend\.env
 copy dashboard\.env.example dashboard\.env
 npm run prisma:generate -w backend
 npm run prisma:migrate -w backend
-npm run seed -w backend
 npm run dev
 ```
 
-Open `http://localhost:5173`. Development credentials:
+Open `http://localhost:5173` and create a real account from the sign-up tab. The first registered user becomes the admin.
 
-- Admin: `admin@livetrack.test` / `DemoPass123!`
-- Viewer: `viewer@livetrack.test` / `DemoPass123!`
+If an older local database was seeded before this change, remove only the old sample records:
 
-Never use these credentials in production.
+```bash
+npm run clear-demo-data -w backend
+```
 
 ## Commands
 
@@ -32,8 +32,8 @@ npm run dev                 # API and dashboard
 npm run build               # production builds
 npm test                    # backend tests
 npm run lint                # strict TypeScript checks
+npm run clear-demo-data -w backend
 npm run prisma:deploy -w backend
-npm run seed -w backend
 docker compose up --build
 ```
 

@@ -68,7 +68,7 @@ export function LiveMap({
   }, [onSelect]);
 
   if (!apiKey) {
-    return <div className="map map-message">Google Maps API key is missing.</div>;
+    return <FallbackLiveMap devices={devices} selected={selected} onSelect={onSelect} />;
   }
   if (loadError) {
     return <div className="map map-message">Google Maps could not be loaded. Check the API key restrictions.</div>;
@@ -119,5 +119,52 @@ export function LiveMap({
         />
       )}
     </GoogleMap>
+  );
+}
+
+function FallbackLiveMap({
+  devices,
+  selected,
+  onSelect
+}: {
+  devices: Device[];
+  selected?: string;
+  onSelect?: (id: string) => void;
+}) {
+  const locatedDevices = devices.filter(device => device.latestLocation);
+  if (!locatedDevices.length) {
+    return <div className="map map-message">Waiting for mobile location updates...</div>;
+  }
+
+  const lats = locatedDevices.map(device => device.latestLocation!.latitude);
+  const lngs = locatedDevices.map(device => device.latestLocation!.longitude);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const spanLat = Math.max(maxLat - minLat, 0.01);
+  const spanLng = Math.max(maxLng - minLng, 0.01);
+
+  return (
+    <div className="map fallback-map">
+      {locatedDevices.map(device => {
+        const location = device.latestLocation!;
+        const left = 8 + ((location.longitude - minLng) / spanLng) * 84;
+        const top = 92 - ((location.latitude - minLat) / spanLat) * 84;
+        return (
+          <button
+            key={device.id}
+            className={`fallback-marker ${selected === device.id ? "selected" : ""}`}
+            style={{ left: `${left}%`, top: `${top}%` }}
+            onClick={() => onSelect?.(device.id)}
+            title={`${device.deviceName}: ${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`}
+          >
+            <span />
+            <b>{device.deviceName}</b>
+            <small>{location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</small>
+          </button>
+        );
+      })}
+    </div>
   );
 }

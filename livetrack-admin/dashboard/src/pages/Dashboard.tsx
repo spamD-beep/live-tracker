@@ -1,6 +1,103 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Activity, BatteryCharging, Clock3, Radio, Smartphone, WifiOff } from "lucide-react";
-import { api } from "../lib/api";import { connectSocket } from "../lib/socket";import { useAuth } from "../store/auth";import type { Device } from "../types";import { LiveMap } from "../components/LiveMap";import { StatusBadge } from "../components/StatusBadge";
+import { api } from "../lib/api";
+import { connectSocket } from "../lib/socket";
+import { useAuth } from "../store/auth";
+import type { Device } from "../types";
+import { LiveMap } from "../components/LiveMap";
+import { StatusBadge } from "../components/StatusBadge";
 import "./Dashboard.css";
-export function Dashboard(){const qc=useQueryClient(),token=useAuth(s=>s.accessToken)!;const [selected,setSelected]=useState<string>();const summary=useQuery({queryKey:["summary"],queryFn:()=>api.get("/dashboard/summary").then(r=>r.data)});const devices=useQuery({queryKey:["devices"],queryFn:()=>api.get("/devices").then(r=>r.data.devices as Device[])});useEffect(()=>{const s=connectSocket(token);const refresh=()=>{qc.invalidateQueries({queryKey:["devices"]});qc.invalidateQueries({queryKey:["summary"]})};s.on("device:location",refresh).on("device:online",refresh).on("device:offline",refresh).on("device:updated",refresh);s.on("connect",refresh);return()=>{s.disconnect()}},[token,qc]);const cards=[["Total fleet",summary.data?.total,Smartphone,"All registered"],["Online now",summary.data?.online,Radio,"Updated < 60 sec"],["Idle",summary.data?.idle,Clock3,"1–5 min ago"],["Offline",summary.data?.offline,WifiOff,"> 5 min ago"],["Tracking",summary.data?.tracking,Activity,"Consent enabled"]] as const;return <div className="page"><div className="page-title"><div><span className="eyebrow">OPERATIONS OVERVIEW</span><h1>Command center</h1><p>Live visibility across your authorized device fleet.</p></div><div className="demo-pill"><i/> DEMO DATA</div></div><div className="stats">{cards.map(([label,val,Icon,note],i)=><article key={label} className={`stat s${i}`}><span className="stat-icon"><Icon/></span><div><span>{label}</span><b>{summary.isLoading?"—":val}</b><small>{note}</small></div></article>)}</div><div className="dashboard-grid"><section className="map-card"><div className="card-head"><div><h2>Live operations map</h2><span>Markers update automatically</span></div><div className="legend"><i className="online"/> Online <i className="idle"/> Idle <i className="offline"/> Offline</div></div>{devices.isLoading?<div className="skeleton map"/>:<LiveMap devices={devices.data??[]} selected={selected} onSelect={setSelected}/>}</section><section className="fleet-card"><div className="card-head"><div><h2>Fleet status</h2><span>{devices.data?.length??0} registered devices</span></div></div><div className="fleet-list">{devices.data?.map(d=><button key={d.id} className={selected===d.id?"selected":""} onClick={()=>setSelected(d.id)}><span className="device-icon"><Smartphone/></span><span><b>{d.deviceName}</b><small>{d.user.fullName} · {d.platform}</small></span><span><StatusBadge status={d.status}/><small className="battery"><BatteryCharging/> {d.latestLocation?.batteryLevel??"—"}%</small></span></button>)}</div></section></div></div>}
+
+export function Dashboard() {
+  const queryClient = useQueryClient();
+  const token = useAuth(state => state.accessToken)!;
+  const [selected, setSelected] = useState<string>();
+  const summary = useQuery({ queryKey: ["summary"], queryFn: () => api.get("/dashboard/summary").then(response => response.data) });
+  const devices = useQuery({ queryKey: ["devices"], queryFn: () => api.get("/devices").then(response => response.data.devices as Device[]) });
+  const trackingDevices = (devices.data ?? []).filter(device => device.isTracking);
+
+  useEffect(() => {
+    const socket = connectSocket(token);
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      queryClient.invalidateQueries({ queryKey: ["summary"] });
+    };
+    socket.on("device:location", refresh).on("device:online", refresh).on("device:offline", refresh).on("device:updated", refresh);
+    socket.on("connect", refresh);
+    return () => {
+      socket.disconnect();
+    };
+  }, [token, queryClient]);
+
+  const cards = [
+    ["Total fleet", summary.data?.total, Smartphone, "All registered"],
+    ["Online now", summary.data?.online, Radio, "Updated < 60 sec"],
+    ["Idle", summary.data?.idle, Clock3, "1-5 min ago"],
+    ["Offline", summary.data?.offline, WifiOff, "> 5 min ago"],
+    ["Tracking", summary.data?.tracking, Activity, "Consent enabled"],
+  ] as const;
+
+  return (
+    <div className="page">
+      <div className="page-title">
+        <div>
+          <span className="eyebrow">OPERATIONS OVERVIEW</span>
+          <h1>Command center</h1>
+          <p>Live visibility across your authorized device fleet.</p>
+        </div>
+      </div>
+
+      <div className="stats">
+        {cards.map(([label, value, Icon, note], index) => (
+          <article key={label} className={`stat s${index}`}>
+            <span className="stat-icon"><Icon /></span>
+            <div>
+              <span>{label}</span>
+              <b>{summary.isLoading ? "-" : value}</b>
+              <small>{note}</small>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="dashboard-grid">
+        <section className="map-card">
+          <div className="card-head">
+            <div>
+              <h2>Live operations map</h2>
+              <span>Markers update automatically</span>
+            </div>
+            <div className="legend"><i className="online" /> Online <i className="idle" /> Idle <i className="offline" /> Offline</div>
+          </div>
+          {devices.isLoading ? <div className="skeleton map" /> : <LiveMap devices={trackingDevices} selected={selected} onSelect={setSelected} />}
+        </section>
+
+        <section className="fleet-card">
+          <div className="card-head">
+            <div>
+              <h2>Fleet status</h2>
+              <span>{trackingDevices.length} tracking devices</span>
+            </div>
+          </div>
+          <div className="fleet-list">
+            {trackingDevices.map(device => (
+              <button key={device.id} className={selected === device.id ? "selected" : ""} onClick={() => setSelected(device.id)}>
+                <span className="device-icon"><Smartphone /></span>
+                <span>
+                  <b>{device.deviceName}</b>
+                  <small>{device.user.fullName} - {device.platform}</small>
+                </span>
+                <span>
+                  <StatusBadge status={device.status} />
+                  <small className="battery"><BatteryCharging /> {device.latestLocation?.batteryLevel ?? "-"}%</small>
+                </span>
+              </button>
+            ))}
+            {!devices.isLoading && !trackingDevices.length && <div className="empty">No devices are actively tracking.</div>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

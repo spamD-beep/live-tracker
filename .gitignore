@@ -1,0 +1,16 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+coverage/
+pubspec.lock
+!mobile/pubspec.lock
+
+*.iml
+.idea/
+
+.env
+*.jks
+*.keystore
+key.properties

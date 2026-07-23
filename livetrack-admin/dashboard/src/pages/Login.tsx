@@ -11,8 +11,8 @@ export function Login() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("admin@livetrack.test");
-  const [password, setPassword] = useState("DemoPass123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -101,7 +101,6 @@ export function Login() {
           <button className="auth-submit" disabled={loading}>
             {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
           </button>
-          <small className="auth-demo">Development demo: admin@livetrack.test / DemoPass123!</small>
         </form>
       </section>
     </div>
