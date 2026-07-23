@@ -1,0 +1,151 @@
+.app:not(.dark) {
+  --bg: #eef4fc;
+  --panel: #ffffff;
+  --panel2: #f7faff;
+  --text: #12223d;
+  --muted: #71819a;
+  --line: #dbe5f2;
+  --soft: #eaf1fb;
+  --accent: #3478dc;
+  --shadow: 0 18px 50px #234b8312;
+  background: var(--bg);
+}
+
+.app:not(.dark) aside {
+  background: linear-gradient(180deg, #031a3d 0%, #020d22 100%);
+  border-right-color: #17375e;
+}
+
+.app:not(.dark) .brand > span {
+  background: #4a8af0;
+  color: #ffffff;
+}
+
+.app:not(.dark) nav a {
+  color: #89a9cf;
+}
+
+.app:not(.dark) nav a:hover,
+.app:not(.dark) nav a.active {
+  color: #ffffff;
+  background: #174d91;
+}
+
+.app:not(.dark) nav a.active {
+  box-shadow: inset 3px 0 #68b8ff;
+}
+
+.app:not(.dark) .consent {
+  background: #0a3269;
+  border-color: #24558c;
+}
+
+.app:not(.dark) .consent b {
+  color: #d9ebff;
+}
+
+.app:not(.dark) .consent span {
+  color: #8db2dc;
+}
+
+.app:not(.dark) header {
+  background: #ffffffdc;
+}
+
+.app:not(.dark) .demo-pill {
+  border-color: #b8d0ee;
+  background: #eaf3ff;
+  color: #2c67ba;
+}
+
+.app:not(.dark) .device-icon {
+  background: #e7f0fc;
+  color: #3478dc;
+}
+
+.app:not(.dark) .popup button,
+.app:not(.dark) .primary {
+  background: #3478dc;
+  color: #ffffff;
+}
+
+.app.dark {
+  --bg: #061327;
+  --panel: #0c1d38;
+  --panel2: #102544;
+  --text: #edf5ff;
+  --muted: #8ca4c3;
+  --line: #203b60;
+  --soft: #142b4c;
+  --accent: #62a4ff;
+  --shadow: 0 20px 60px #01071166;
+  background: radial-gradient(circle at 45% 0%, #102e59 0%, #061327 42%);
+}
+
+.app.dark aside {
+  background: linear-gradient(180deg, #031a3d 0%, #020d22 100%);
+  border-right-color: #17375e;
+}
+
+.app.dark .brand > span {
+  background: #367ce1;
+  color: #ffffff;
+}
+
+.app.dark nav a {
+  color: #7899c3;
+}
+
+.app.dark nav a:hover,
+.app.dark nav a.active {
+  color: #ffffff;
+  background: #123f78;
+}
+
+.app.dark nav a.active {
+  box-shadow: inset 3px 0 #68b8ff;
+}
+
+.app.dark .consent {
+  background: #08295a;
+  border-color: #194678;
+}
+
+.app.dark .consent b {
+  color: #d8eaff;
+}
+
+.app.dark .consent span {
+  color: #779bc8;
+}
+
+.app.dark header {
+  background: #07162ddd;
+}
+
+.app.dark .demo-pill {
+  border-color: #2d5685;
+  background: #102c52;
+  color: #8fc0ff;
+}
+
+.app.dark .device-icon {
+  background: #142f55;
+  color: #6aaaff;
+}
+
+.app.dark .popup button,
+.app.dark .primary {
+  background: #4a8bea;
+  color: #ffffff;
+}
+
+.app.dark .table-card,
+.app.dark .map-card,
+.app.dark .fleet-card,
+.app.dark .timeline,
+.app.dark .settings-grid > section,
+.app.dark .detail-map,
+.app.dark .stat {
+  box-shadow: 0 18px 50px #0006;
+}

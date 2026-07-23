@@ -1,0 +1,10 @@
+import jwt, { type SignOptions } from "jsonwebtoken";
+import crypto from "node:crypto";
+import { env } from "../config/env.js";
+export type Claims = { sub: string; role: "ADMIN" | "VIEWER" | "MOBILE_USER"; email: string };
+export const signAccess = (c: Claims) => jwt.sign(c, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_EXPIRES_IN as SignOptions["expiresIn"] });
+export const signRefresh = (c: Claims) => jwt.sign(c, env.JWT_REFRESH_SECRET, { expiresIn: env.REFRESH_TOKEN_EXPIRES_IN as SignOptions["expiresIn"] });
+export const verifyAccess = (token: string) => jwt.verify(token, env.JWT_ACCESS_SECRET) as Claims;
+export const verifyRefresh = (token: string) => jwt.verify(token, env.JWT_REFRESH_SECRET) as Claims;
+export const hashToken = (token: string) => crypto.createHash("sha256").update(token).digest("hex");
+export const refreshExpiry = () => new Date(Date.now() + 7 * 864e5);

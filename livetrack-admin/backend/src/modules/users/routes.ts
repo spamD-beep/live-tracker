@@ -1,0 +1,10 @@
+import { Router } from "express";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { prisma } from "../../config/db.js";
+import { authenticate, authorize } from "../../middleware/auth.js";
+import { audit } from "../../services/audit.js";
+export const usersRouter=Router();usersRouter.use(authenticate,authorize("ADMIN"));
+usersRouter.get("/",async(_req,res)=>res.json({users:await prisma.user.findMany({select:{id:true,fullName:true,email:true,role:true,isActive:true,createdAt:true,_count:{select:{devices:true}}},orderBy:{fullName:"asc"}})}));
+usersRouter.post("/",async(req,res)=>{const d=z.object({fullName:z.string().min(2),email:z.string().email(),password:z.string().min(8),role:z.enum(["ADMIN","VIEWER","MOBILE_USER"])}).parse(req.body);const u=await prisma.user.create({data:{...d,email:d.email.toLowerCase(),passwordHash:await bcrypt.hash(d.password,12)},select:{id:true,fullName:true,email:true,role:true,isActive:true}});await audit(req.user!.id,"USER_CREATED","User",u.id);res.status(201).json(u);});
+usersRouter.patch("/:id",async(req,res)=>{const d=z.object({fullName:z.string().min(2).optional(),role:z.enum(["ADMIN","VIEWER","MOBILE_USER"]).optional(),isActive:z.boolean().optional()}).parse(req.body);const u=await prisma.user.update({where:{id:req.params.id},data:d,select:{id:true,fullName:true,email:true,role:true,isActive:true}});await audit(req.user!.id,"USER_UPDATED","User",u.id,d);res.json(u);});

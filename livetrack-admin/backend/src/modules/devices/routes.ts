@@ -1,0 +1,17 @@
+import { Router } from "express";
+import { z } from "zod";
+import { prisma } from "../../config/db.js";
+import { authenticate, authorize } from "../../middleware/auth.js";
+import { audit } from "../../services/audit.js";
+import { broadcast } from "../../sockets/index.js";
+import { getStatus } from "../../utils/status.js";
+export const devicesRouter = Router();
+devicesRouter.use(authenticate);
+const body = z.object({ deviceUuid: z.string().min(3), deviceName: z.string().min(2), platform: z.enum(["ANDROID","IOS","OTHER"]).default("OTHER"), appVersion: z.string().optional() });
+const scope = (u: Express.Request["user"]) => u!.role === "ADMIN" || u!.role === "VIEWER" ? {} : { userId: u!.id };
+devicesRouter.post("/register", async (req, res) => { const data = body.parse(req.body); const device = await prisma.device.create({ data: { ...data, userId: req.user!.id } }); await audit(req.user!.id,"DEVICE_REGISTERED","Device",device.id); res.status(201).json(device); });
+devicesRouter.get("/", async (req, res) => { const devices = await prisma.device.findMany({ where: scope(req.user), include: { user: { select: { id:true, fullName:true, email:true } }, locations: { orderBy:{recordedAt:"desc"},take:1 } }, orderBy:{deviceName:"asc"} }); res.json({ devices: devices.map(d => ({...d, latestLocation:d.locations[0]??null, locations:undefined,status:getStatus(d.lastSeenAt)})) }); });
+devicesRouter.get("/:id", async (req, res) => { const d = await prisma.device.findFirst({ where:{id:req.params.id,...scope(req.user)},include:{user:{select:{id:true,fullName:true,email:true}},locations:{orderBy:{recordedAt:"desc"},take:1}}}); if(!d)return res.status(404).json({error:"Device not found"}); res.json({...d,latestLocation:d.locations[0]??null,locations:undefined,status:getStatus(d.lastSeenAt)}); });
+devicesRouter.patch("/:id", async (req,res)=>{ const existing=await prisma.device.findFirst({where:{id:req.params.id,...scope(req.user)}}); if(!existing)return res.status(404).json({error:"Device not found"}); const data=body.omit({deviceUuid:true}).partial().parse(req.body); const d=await prisma.device.update({where:{id:existing.id},data}); broadcast("device:updated",d); res.json(d); });
+devicesRouter.delete("/:id",authorize("ADMIN"),async(req,res)=>{ const id=z.string().parse(req.params.id); const d=await prisma.device.delete({where:{id}}); await audit(req.user!.id,"DEVICE_DELETED","Device",d.id,undefined,typeof req.ip==="string"?req.ip:undefined); broadcast("device:removed",{id:d.id}); res.status(204).send(); });
+devicesRouter.post("/:id/:action",async(req,res)=>{ const action=z.enum(["start","stop"]).parse(req.params.action); const existing=await prisma.device.findFirst({where:{id:req.params.id,...scope(req.user)}}); if(!existing)return res.status(404).json({error:"Device not found"}); const d=await prisma.device.update({where:{id:existing.id},data:{isTracking:action==="start"}}); await audit(req.user!.id,action==="start"?"TRACKING_STARTED":"TRACKING_STOPPED","Device",d.id); broadcast("device:updated",d); res.json(d); });

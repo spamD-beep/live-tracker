@@ -1,0 +1,15 @@
+CREATE TYPE "Role" AS ENUM ('ADMIN', 'VIEWER', 'MOBILE_USER');
+CREATE TYPE "Platform" AS ENUM ('ANDROID', 'IOS', 'OTHER');
+CREATE TABLE "User" ("id" TEXT PRIMARY KEY, "fullName" TEXT NOT NULL, "email" TEXT NOT NULL UNIQUE, "passwordHash" TEXT NOT NULL, "role" "Role" NOT NULL DEFAULT 'MOBILE_USER', "isActive" BOOLEAN NOT NULL DEFAULT true, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Device" ("id" TEXT PRIMARY KEY, "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE, "deviceUuid" TEXT NOT NULL UNIQUE, "deviceName" TEXT NOT NULL, "platform" "Platform" NOT NULL DEFAULT 'OTHER', "appVersion" TEXT, "isTracking" BOOLEAN NOT NULL DEFAULT false, "lastSeenAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Location" ("id" TEXT PRIMARY KEY, "deviceId" TEXT NOT NULL REFERENCES "Device"("id") ON DELETE CASCADE, "clientLocationId" TEXT NOT NULL UNIQUE, "latitude" DOUBLE PRECISION NOT NULL, "longitude" DOUBLE PRECISION NOT NULL, "accuracy" DOUBLE PRECISION, "altitude" DOUBLE PRECISION, "speed" DOUBLE PRECISION, "heading" DOUBLE PRECISION, "batteryLevel" INTEGER, "isCharging" BOOLEAN, "recordedAt" TIMESTAMP(3) NOT NULL, "receivedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "RefreshToken" ("id" TEXT PRIMARY KEY, "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE, "tokenHash" TEXT NOT NULL UNIQUE, "expiresAt" TIMESTAMP(3) NOT NULL, "revokedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "AuditLog" ("id" TEXT PRIMARY KEY, "userId" TEXT REFERENCES "User"("id") ON DELETE SET NULL, "action" TEXT NOT NULL, "entityType" TEXT NOT NULL, "entityId" TEXT, "metadata" JSONB, "ipAddress" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX "Device_userId_idx" ON "Device"("userId");
+CREATE INDEX "Device_lastSeenAt_idx" ON "Device"("lastSeenAt");
+CREATE INDEX "Location_deviceId_idx" ON "Location"("deviceId");
+CREATE INDEX "Location_recordedAt_idx" ON "Location"("recordedAt");
+CREATE INDEX "Location_deviceId_recordedAt_idx" ON "Location"("deviceId", "recordedAt");
+CREATE INDEX "RefreshToken_userId_idx" ON "RefreshToken"("userId");
+CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");

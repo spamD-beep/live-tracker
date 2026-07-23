@@ -1,0 +1,81 @@
+.stats .stat {
+  min-height: 132px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-top: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.stats .stat-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #3478dc;
+  box-shadow: 0 0 0 7px #3478dc28;
+}
+
+.stats .stat-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.stats .stat > div {
+  min-width: 0;
+}
+
+.stats .stat > div > span {
+  font: 800 10px Manrope, sans-serif;
+  letter-spacing: .45px;
+  text-transform: uppercase;
+}
+
+.stats .stat > div > b {
+  margin: 2px 0 0;
+  font-size: 27px;
+  line-height: 1.05;
+}
+
+.stats .stat > div > small {
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.stats .s1 .stat-icon {
+  background: #23aa99;
+  box-shadow: 0 0 0 7px #23aa9928;
+}
+
+.stats .s2 .stat-icon {
+  background: #e6a13b;
+  box-shadow: 0 0 0 7px #e6a13b28;
+}
+
+.stats .s3 .stat-icon {
+  background: #f06757;
+  box-shadow: 0 0 0 7px #f0675728;
+}
+
+.stats .s4 .stat-icon {
+  background: #8a67d5;
+  box-shadow: 0 0 0 7px #8a67d528;
+}
+
+@media (max-width: 760px) {
+  .stats .stat {
+    min-height: 116px;
+    padding: 15px;
+  }
+
+  .stats .stat-icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+    box-shadow: none;
+  }
+}
