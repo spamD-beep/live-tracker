@@ -9,11 +9,13 @@ import 'package:mocktail/mocktail.dart';
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  testWidgets('login screen shows email password and login controls', (tester) async {
+  testWidgets('login screen shows email password and login controls',
+      (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          authControllerProvider.overrideWith((ref) => AuthController(MockAuthRepository())),
+          authControllerProvider
+              .overrideWith((ref) => AuthController(MockAuthRepository())),
         ],
         child: const MaterialApp(home: LoginScreen()),
       ),

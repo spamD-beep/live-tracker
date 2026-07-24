@@ -5,6 +5,7 @@ import 'package:livetrack_mobile/features/auth/data/auth_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDio extends Mock implements Dio {}
+
 class MockSecureStore extends Mock implements SecureStore {}
 
 void main() {
@@ -13,13 +14,18 @@ void main() {
     final store = MockSecureStore();
     when(() => store.saveToken(any())).thenAnswer((_) async {});
     when(() => store.saveRefreshToken(any())).thenAnswer((_) async {});
-    when(() => dio.post<Map<String, dynamic>>('/api/auth/login', data: any(named: 'data'))).thenAnswer(
+    when(() => dio.post<Map<String, dynamic>>('/api/auth/login',
+        data: any(named: 'data'))).thenAnswer(
       (_) async => Response(
         requestOptions: RequestOptions(path: '/api/auth/login'),
         data: {
           'accessToken': 'access-token',
           'refreshToken': 'refresh-token',
-          'user': {'id': 'user-1', 'fullName': 'Real User', 'email': 'real@example.com'},
+          'user': {
+            'id': 'user-1',
+            'fullName': 'Real User',
+            'email': 'real@example.com'
+          },
         },
       ),
     );

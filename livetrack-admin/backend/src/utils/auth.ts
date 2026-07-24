@@ -1,7 +1,7 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
 import { env } from "../config/env.js";
-export type Claims = { sub: string; role: "ADMIN" | "VIEWER" | "MOBILE_USER"; email: string };
+export type Claims = { sub: string; role: "ADMIN" | "MANAGER" | "VIEWER" | "MOBILE_USER"; email: string };
 export const signAccess = (c: Claims) => jwt.sign(c, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_EXPIRES_IN as SignOptions["expiresIn"] });
 export const signRefresh = (c: Claims) => jwt.sign(c, env.JWT_REFRESH_SECRET, { expiresIn: env.REFRESH_TOKEN_EXPIRES_IN as SignOptions["expiresIn"] });
 export const verifyAccess = (token: string) => jwt.verify(token, env.JWT_ACCESS_SECRET) as Claims;

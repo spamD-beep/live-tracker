@@ -24,7 +24,7 @@ class AppConfig {
         defaultValue: 10);
     return AppConfig(
       apiBaseUrl: const String.fromEnvironment('API_BASE_URL',
-          defaultValue: 'https://api.example.com'),
+          defaultValue: 'http://192.168.1.5:4000'),
       foregroundInterval: const Duration(
           seconds: int.fromEnvironment('LOCATION_FOREGROUND_INTERVAL_SECONDS',
               defaultValue: 15)),

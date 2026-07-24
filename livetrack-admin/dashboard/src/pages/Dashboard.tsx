@@ -86,7 +86,7 @@ export function Dashboard() {
                 <span className="device-icon"><Smartphone /></span>
                 <span>
                   <b>{device.deviceName}</b>
-                  <small>{device.user.fullName} - {device.platform}</small>
+                  <small>{device.latestEstimate?.room?.name ?? device.latestEstimate?.floor?.name ?? "Room unknown"} - {Math.round((device.latestEstimate?.confidence ?? 0) * 100)}%</small>
                 </span>
                 <span>
                   <StatusBadge status={device.status} />

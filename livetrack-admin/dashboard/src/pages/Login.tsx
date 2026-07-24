@@ -60,7 +60,7 @@ export function Login() {
         </div>
         <div className="auth-visual-foot">
           <i />
-          Live fleet data is encrypted and permission controlled
+          Live fleet data is encrypted, audited, and permission controlled
         </div>
       </section>
 
@@ -69,7 +69,7 @@ export function Login() {
           <div className="auth-mobile-brand"><Radio /> LiveTrack Admin</div>
           <span className="auth-kicker">{mode === "login" ? "WELCOME BACK" : "GET STARTED"}</span>
           <h2>{mode === "login" ? "Log in to your account" : "Create your account"}</h2>
-          <p>{mode === "login" ? "Monitor your authorized fleet from one secure dashboard." : "Register for secure, consent-first location operations."}</p>
+          <p>{mode === "login" ? "Monitor authorized devices with role-based access and audit protection." : "Register for secure, consent-first location operations."}</p>
 
           <div className="auth-tabs">
             <button type="button" className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")}>Log in</button>
@@ -99,7 +99,7 @@ export function Login() {
           )}
           {error && <div className="auth-error">{error}</div>}
           <button className="auth-submit" disabled={loading}>
-            {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
+            {loading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
           </button>
         </form>
       </section>

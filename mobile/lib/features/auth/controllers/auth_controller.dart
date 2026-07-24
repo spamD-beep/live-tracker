@@ -29,9 +29,7 @@ class AuthController extends StateNotifier<AuthState> {
           user: await _repo.login(email, password), loading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
-          loading: false,
-          error: 'Login failed. Check your credentials and connection.');
+      state = state.copyWith(loading: false, error: authErrorMessage(e));
       return false;
     }
   }
@@ -48,9 +46,8 @@ class AuthController extends StateNotifier<AuthState> {
               deviceName: deviceName),
           loading: false);
       return true;
-    } catch (_) {
-      state = state.copyWith(
-          loading: false, error: 'Registration failed. Please try again.');
+    } catch (e) {
+      state = state.copyWith(loading: false, error: authErrorMessage(e));
       return false;
     }
   }

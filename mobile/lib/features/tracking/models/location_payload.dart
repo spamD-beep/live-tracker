@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class LocationPayload {
@@ -43,8 +42,7 @@ class LocationPayload {
         'heading': heading,
         'batteryLevel': batteryLevel,
         'isCharging': isCharging,
-        'recordedAt':
-            DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ").format(recordedAt),
+        'recordedAt': recordedAt.toUtc().toIso8601String(),
       };
 
   factory LocationPayload.fromJson(Map<String, dynamic> json) =>

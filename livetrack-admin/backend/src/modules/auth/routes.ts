@@ -10,6 +10,8 @@ const credentials = z.object({ email: z.string().email().transform(v => v.toLowe
 const publicUser = (u: { id: string; fullName: string; email: string; role: string; isActive: boolean }) => ({ id: u.id, fullName: u.fullName, email: u.email, role: u.role, isActive: u.isActive });
 authRouter.post("/register", async (req, res) => {
   const data = credentials.extend({ fullName: z.string().min(2) }).parse(req.body);
+  const existing = await prisma.user.findUnique({ where: { email: data.email } });
+  if (existing) return res.status(409).json({ error: "This email is already registered" });
   const count = await prisma.user.count();
   const user = await prisma.user.create({ data: { fullName: data.fullName, email: data.email, passwordHash: await bcrypt.hash(data.password, 12), role: count ? "MOBILE_USER" : "ADMIN" } });
   res.status(201).json({ user: publicUser(user) });

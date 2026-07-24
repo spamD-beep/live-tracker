@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  MANAGER
   VIEWER
   MOBILE_USER
 }
@@ -19,78 +20,319 @@ enum Platform {
   OTHER
 }
 
+enum OfficePresence {
+  INSIDE
+  OUTSIDE
+  UNKNOWN
+}
+
+enum EstimateStatus {
+  CONFIRMED
+  PROBABLE
+  NEAR
+  UNKNOWN
+}
+
+enum CalibrationStatus {
+  DRAFT
+  VALIDATING
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
-  id String @id @default(uuid())
-  fullName String
-  email String @unique
-  passwordHash String
-  role Role @default(MOBILE_USER)
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  devices Device[]
-  refreshTokens RefreshToken[]
-  auditLogs AuditLog[]
+  id                  String               @id @default(uuid())
+  fullName            String
+  email               String               @unique
+  passwordHash        String
+  role                Role                 @default(MOBILE_USER)
+  managerId           String?
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  manager             User?                @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports             User[]               @relation("ManagerReports")
+  devices             Device[]
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  calibrationSessions CalibrationSession[]
+  roomCorrections     RoomCorrection[]
+
+  @@index([managerId])
 }
 
 model Device {
-  id String @id @default(uuid())
-  userId String
-  deviceUuid String @unique
-  deviceName String
-  platform Platform @default(OTHER)
-  appVersion String?
-  isTracking Boolean @default(false)
-  lastSeenAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  locations Location[]
+  id                 String                @id @default(uuid())
+  userId             String
+  deviceUuid         String                @unique
+  deviceName         String
+  platform           Platform              @default(OTHER)
+  appVersion         String?
+  isTracking         Boolean               @default(false)
+  lastSeenAt         DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locations          Location[]
+  observations       LocationObservation[]
+  estimates          LocationEstimate[]
+  fingerprintSamples FingerprintSample[]
+  roomCorrections    RoomCorrection[]
+
   @@index([userId])
   @@index([lastSeenAt])
 }
 
 model Location {
-  id String @id @default(uuid())
-  deviceId String
-  clientLocationId String @unique
-  latitude Float
-  longitude Float
-  accuracy Float?
-  altitude Float?
-  speed Float?
-  heading Float?
-  batteryLevel Int?
-  isCharging Boolean?
-  recordedAt DateTime
-  receivedAt DateTime @default(now())
-  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  id               String   @id @default(uuid())
+  deviceId         String
+  clientLocationId String   @unique
+  latitude         Float
+  longitude        Float
+  accuracy         Float?
+  altitude         Float?
+  speed            Float?
+  heading          Float?
+  batteryLevel     Int?
+  isCharging       Boolean?
+  recordedAt       DateTime
+  receivedAt       DateTime @default(now())
+  device           Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
   @@index([deviceId])
   @@index([recordedAt])
   @@index([deviceId, recordedAt])
 }
 
 model RefreshToken {
-  id String @id @default(uuid())
-  userId String
-  tokenHash String @unique
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
   expiresAt DateTime
   revokedAt DateTime?
-  createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
 model AuditLog {
-  id String @id @default(uuid())
-  userId String?
-  action String
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
   entityType String
-  entityId String?
-  metadata Json?
-  ipAddress String?
-  createdAt DateTime @default(now())
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([createdAt])
   @@index([userId])
+}
+
+model Office {
+  id                   String                @id @default(uuid())
+  name                 String
+  latitude             Float
+  longitude            Float
+  geofenceRadiusMeters Int                   @default(150)
+  timezone             String                @default("UTC")
+  retentionDays        Int                   @default(30)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  floors               Floor[]
+  accessPoints         AccessPoint[]
+  observations         LocationObservation[]
+  estimates            LocationEstimate[]
+
+  @@index([isActive])
+}
+
+model Floor {
+  id          String             @id @default(uuid())
+  officeId    String
+  name        String
+  floorOrder  Int                @default(0)
+  mapImageUrl String?
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  office      Office             @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  rooms       Room[]
+  estimates   LocationEstimate[]
+
+  @@unique([officeId, floorOrder])
+  @@index([officeId])
+}
+
+model Room {
+  id                  String               @id @default(uuid())
+  floorId             String
+  name                String
+  type                String               @default("ROOM")
+  zoneMetadata        Json?
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  floor               Floor                @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  calibrationSessions CalibrationSession[]
+  fingerprintSamples  FingerprintSample[]
+  fingerprints        RoomFingerprint[]
+  estimates           LocationEstimate[]
+  reportedCorrections RoomCorrection[]     @relation("ReportedRoomCorrections")
+  estimatedCorrections RoomCorrection[]    @relation("EstimatedRoomCorrections")
+
+  @@unique([floorId, name])
+  @@index([floorId])
+}
+
+model AccessPoint {
+  id              String    @id @default(uuid())
+  officeId        String
+  bssid           String
+  ssid            String?
+  band            String?
+  channel         Int?
+  label           String?
+  stabilityStatus String    @default("UNKNOWN")
+  lastSeenAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  office          Office    @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  @@unique([officeId, bssid])
+  @@index([officeId])
+}
+
+model CalibrationSession {
+  id          String              @id @default(uuid())
+  roomId      String
+  createdById String?
+  status      CalibrationStatus   @default(DRAFT)
+  notes       String?
+  startedAt   DateTime            @default(now())
+  completedAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  room        Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdBy   User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  samples     FingerprintSample[]
+
+  @@index([roomId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model FingerprintSample {
+  id                   String             @id @default(uuid())
+  calibrationSessionId String
+  roomId               String
+  deviceId             String?
+  bssid                String
+  ssid                 String?
+  rssi                 Int
+  frequencyMhz         Int?
+  deviceModel          String?
+  capturedAt           DateTime
+  createdAt            DateTime           @default(now())
+  calibrationSession   CalibrationSession @relation(fields: [calibrationSessionId], references: [id], onDelete: Cascade)
+  room                 Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  device               Device?            @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([calibrationSessionId])
+  @@index([roomId])
+  @@index([bssid])
+  @@index([capturedAt])
+}
+
+model RoomFingerprint {
+  id             String   @id @default(uuid())
+  roomId         String
+  bssid          String
+  rssiMin        Int
+  rssiMax        Int
+  rssiMean       Float
+  rssiStddev     Float
+  visibilityRate Float
+  sampleCount    Int
+  version        Int      @default(1)
+  isActive       Boolean  @default(true)
+  publishedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  room           Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, bssid, version])
+  @@index([roomId])
+  @@index([bssid])
+  @@index([isActive])
+}
+
+model LocationObservation {
+  id           String         @id @default(uuid())
+  deviceId     String
+  officeId     String?
+  officeStatus OfficePresence @default(UNKNOWN)
+  latitude     Float?
+  longitude    Float?
+  accuracy     Float?
+  rawScan      Json
+  motionState  String?
+  capturedAt   DateTime
+  receivedAt   DateTime       @default(now())
+  device       Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  office       Office?        @relation(fields: [officeId], references: [id], onDelete: SetNull)
+
+  @@index([deviceId])
+  @@index([officeId])
+  @@index([capturedAt])
+}
+
+model LocationEstimate {
+  id           String         @id @default(uuid())
+  deviceId     String
+  officeId     String?
+  floorId      String?
+  roomId       String?
+  officeStatus OfficePresence @default(UNKNOWN)
+  status       EstimateStatus @default(UNKNOWN)
+  confidence   Float          @default(0)
+  source       String         @default("wifi-fingerprint")
+  observedAt   DateTime
+  staleAt      DateTime?
+  createdAt    DateTime       @default(now())
+  device       Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  office       Office?        @relation(fields: [officeId], references: [id], onDelete: SetNull)
+  floor        Floor?         @relation(fields: [floorId], references: [id], onDelete: SetNull)
+  room         Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([deviceId])
+  @@index([officeId])
+  @@index([floorId])
+  @@index([roomId])
+  @@index([observedAt])
+  @@index([status])
+}
+
+model RoomCorrection {
+  id              String           @id @default(uuid())
+  deviceId        String
+  userId          String
+  reportedRoomId  String?
+  estimatedRoomId String?
+  note            String?
+  status          String           @default("OPEN")
+  createdAt       DateTime         @default(now())
+  resolvedAt      DateTime?
+  device          Device           @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportedRoom    Room?            @relation("ReportedRoomCorrections", fields: [reportedRoomId], references: [id], onDelete: SetNull)
+  estimatedRoom   Room?            @relation("EstimatedRoomCorrections", fields: [estimatedRoomId], references: [id], onDelete: SetNull)
+
+  @@index([deviceId])
+  @@index([userId])
+  @@index([reportedRoomId])
+  @@index([status])
 }

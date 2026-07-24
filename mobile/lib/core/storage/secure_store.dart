@@ -24,6 +24,8 @@ class SecureStore {
       _storage.write(key: 'registered_device_id', value: id);
   Future<String?> readRegisteredDeviceId() =>
       _storage.read(key: 'registered_device_id');
+  Future<void> clearRegisteredDeviceId() =>
+      _storage.delete(key: 'registered_device_id');
 
   Future<String> getOrCreateDeviceId() async {
     final existing = await _storage.read(key: 'device_id');
@@ -33,9 +35,16 @@ class SecureStore {
     return id;
   }
 
+  Future<String> resetDeviceIdentity() async {
+    await clearRegisteredDeviceId();
+    final id = const Uuid().v4();
+    await _storage.write(key: 'device_id', value: id);
+    return id;
+  }
+
   Future<void> clearSessionKeepingDevice() async {
     await clearToken();
     await clearRefreshToken();
-    await _storage.delete(key: 'registered_device_id');
+    await clearRegisteredDeviceId();
   }
 }

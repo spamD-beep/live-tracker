@@ -7,9 +7,12 @@ import '../../../core/config/app_config.dart';
 import '../../../core/storage/secure_store.dart';
 import '../../devices/data/device_repository.dart';
 import '../data/location_repository.dart';
+import '../data/wifi_observation_repository.dart';
+import '../models/location_payload.dart';
 import '../services/background_tracking.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
+import '../services/wifi_scan_service.dart';
 import 'tracking_state.dart';
 
 final locationServiceProvider = Provider<LocationService>((ref) {
@@ -22,17 +25,22 @@ final trackingControllerProvider =
   return TrackingController(
     ref.watch(locationServiceProvider),
     ref.watch(locationRepositoryProvider),
+    ref.watch(wifiObservationRepositoryProvider),
     ref.watch(deviceRepositoryProvider),
+    ref.watch(wifiScanServiceProvider),
     ref.watch(appConfigProvider),
   );
 });
 
 class TrackingController extends StateNotifier<TrackingState> {
-  TrackingController(this._location, this._repo, this._deviceRepo, this._config)
+  TrackingController(this._location, this._repo, this._observations,
+      this._deviceRepo, this._wifi, this._config)
       : super(const TrackingState());
   final LocationService _location;
   final LocationRepository _repo;
+  final WifiObservationRepository _observations;
   final DeviceRepository _deviceRepo;
+  final WifiScanService _wifi;
   final AppConfig _config;
   final _notifications = NotificationService();
   StreamSubscription? _sub;
@@ -60,6 +68,7 @@ class TrackingController extends StateNotifier<TrackingState> {
         final payload =
             await _location.payloadFromPosition(position, _deviceName);
         await _repo.sendOrQueue(payload);
+        unawaited(_sendWifiObservation(payload));
         state = state.copyWith(
             current: payload, lastSync: DateTime.now(), error: null);
       }, onError: (Object e) {
@@ -83,6 +92,7 @@ class TrackingController extends StateNotifier<TrackingState> {
     try {
       final payload = await _location.currentPayload(_deviceName);
       await _repo.sendOrQueue(payload);
+      await _sendWifiObservation(payload);
       state = state.copyWith(
           current: payload, lastSync: DateTime.now(), error: null);
     } catch (e) {
@@ -91,6 +101,11 @@ class TrackingController extends StateNotifier<TrackingState> {
   }
 
   Future<void> syncQueue() => _repo.syncQueue();
+
+  Future<void> _sendWifiObservation(LocationPayload payload) async {
+    final readings = await _wifi.scan();
+    await _observations.send(readings, location: payload);
+  }
 
   @override
   void dispose() {

@@ -112,6 +112,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 8),
                       Text('User: ${user?.name ?? '-'}'),
                       Text('Device: ${point?.deviceName ?? 'Mobile device'}'),
+                      const SizedBox(height: 10),
+                      Text(
+                        tracking.isTracking
+                            ? 'Location sharing is active with your consent.'
+                            : 'Location sharing is paused until you start tracking.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ]),
               ),
             ),

@@ -63,3 +63,25 @@ class AuthRepository {
     await _store.clearSessionKeepingDevice();
   }
 }
+
+String authErrorMessage(Object error) {
+  if (error is DioException) {
+    final data = error.response?.data;
+    if (data is Map && data['error'] != null) {
+      return data['error'].toString();
+    }
+    if (error.response?.statusCode == 401) {
+      return 'Invalid email or password';
+    }
+    if (error.response?.statusCode == 409) {
+      return 'This email is already registered';
+    }
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.connectionError) {
+      return 'Cannot reach backend. Check Wi-Fi and server URL.';
+    }
+  }
+  return 'Something went wrong. Please try again.';
+}

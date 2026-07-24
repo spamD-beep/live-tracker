@@ -27,6 +27,34 @@ class _PermissionScreenState extends ConsumerState<PermissionScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.privacy_tip_outlined,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Text('Consent and privacy',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'LiveTrack shares this device location only after you grant permission and tracking is active. Office Wi-Fi scans are used only for room estimation, and scans outside the office are not retained.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           _Tile(
               title: 'GPS',
               value: state.gpsEnabled ? 'Enabled' : 'Disabled',
