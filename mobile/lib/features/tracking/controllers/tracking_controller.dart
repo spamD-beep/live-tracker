@@ -44,6 +44,8 @@ class TrackingController extends StateNotifier<TrackingState> {
   final AppConfig _config;
   final _notifications = NotificationService();
   StreamSubscription? _sub;
+  Timer? _foregroundRefreshTimer;
+  bool _refreshInFlight = false;
   String _deviceName = 'Mobile device';
 
   Future<void> start(String deviceName) async {
@@ -74,12 +76,15 @@ class TrackingController extends StateNotifier<TrackingState> {
       }, onError: (Object e) {
         state = state.copyWith(error: e.toString());
       });
+      _startForegroundRefreshTimer();
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
   }
 
   Future<void> stop() async {
+    _foregroundRefreshTimer?.cancel();
+    _foregroundRefreshTimer = null;
     await _sub?.cancel();
     _sub = null;
     await Workmanager().cancelByUniqueName(backgroundTrackingTask);
@@ -89,6 +94,8 @@ class TrackingController extends StateNotifier<TrackingState> {
   }
 
   Future<void> refresh() async {
+    if (_refreshInFlight) return;
+    _refreshInFlight = true;
     try {
       final payload = await _location.currentPayload(_deviceName);
       await _repo.sendOrQueue(payload);
@@ -97,6 +104,8 @@ class TrackingController extends StateNotifier<TrackingState> {
           current: payload, lastSync: DateTime.now(), error: null);
     } catch (e) {
       state = state.copyWith(error: e.toString());
+    } finally {
+      _refreshInFlight = false;
     }
   }
 
@@ -107,8 +116,16 @@ class TrackingController extends StateNotifier<TrackingState> {
     await _observations.send(readings, location: payload);
   }
 
+  void _startForegroundRefreshTimer() {
+    _foregroundRefreshTimer?.cancel();
+    _foregroundRefreshTimer = Timer.periodic(_config.foregroundInterval, (_) {
+      if (state.isTracking) unawaited(refresh());
+    });
+  }
+
   @override
   void dispose() {
+    _foregroundRefreshTimer?.cancel();
     _sub?.cancel();
     super.dispose();
   }

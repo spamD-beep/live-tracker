@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authenticate, authorize } from "../../middleware/auth.js";
 import { prisma } from "../../config/db.js";
 import { audit } from "../../services/audit.js";
+import { broadcast } from "../../sockets/index.js";
 import { computeFingerprints } from "./fingerprint.js";
 import { distanceMeters, estimateRoom, smoothReadings, stabilizeRoomEstimate } from "./estimate.js";
 
@@ -454,5 +455,6 @@ officesRouter.post("/observations", async (req, res) => {
     });
   }
 
+  broadcast("device:updated", { deviceId: device.id, estimate });
   res.status(201).json({ observation, estimate });
 });
