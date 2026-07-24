@@ -27,7 +27,7 @@ class AppConfig {
           defaultValue: 'http://192.168.1.5:4000'),
       foregroundInterval: const Duration(
           seconds: int.fromEnvironment('LOCATION_FOREGROUND_INTERVAL_SECONDS',
-              defaultValue: 15)),
+              defaultValue: 10)),
       backgroundInterval: const Duration(
           minutes: int.fromEnvironment('LOCATION_BACKGROUND_INTERVAL_MINUTES',
               defaultValue: 15)),
