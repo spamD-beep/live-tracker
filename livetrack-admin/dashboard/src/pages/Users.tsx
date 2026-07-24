@@ -16,6 +16,8 @@ export function Users() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ fullName: "", email: "", password: "", role: "MOBILE_USER", managerId: "" });
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({ role: "MOBILE_USER", managerId: "" });
   const { data = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => api.get("/users").then(response => response.data.users as UserRow[])
@@ -44,8 +46,15 @@ export function Users() {
         success: "User updated.",
         error: "Unable to update user."
       }),
-    onSuccess: refresh
+    onSuccess: () => {
+      setEditingUser(null);
+      refresh();
+    }
   });
+  const openEdit = (user: UserRow) => {
+    setEditingUser(user);
+    setEditForm({ role: user.role, managerId: user.managerId ?? "" });
+  };
 
   return (
     <div className="page">
@@ -88,11 +97,40 @@ export function Users() {
         </div>
       )}
 
+      {editingUser && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setEditingUser(null)}>
+          <section className="user-modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-title" onMouseDown={event => event.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <h2 id="edit-user-title">Edit user</h2>
+                <span>Assign a manager to control team visibility.</span>
+              </div>
+              <button className="modal-close" aria-label="Close" onClick={() => setEditingUser(null)}>X</button>
+            </div>
+            <div className="user-modal-form">
+              <label>Full name<input value={editingUser.fullName} readOnly /></label>
+              <label>Email<input value={editingUser.email} readOnly /></label>
+              <label>Role<select value={editForm.role} onChange={event => setEditForm({ ...editForm, role: event.target.value })}>
+                {roles.map(role => <option key={role} value={role}>{role}</option>)}
+              </select></label>
+              <label>Manager<select value={editForm.managerId} onChange={event => setEditForm({ ...editForm, managerId: event.target.value })}>
+                <option value="">No manager</option>
+                {managers.filter(manager => manager.id !== editingUser.id).map(manager => <option key={manager.id} value={manager.id}>{manager.fullName}</option>)}
+              </select></label>
+            </div>
+            <div className="modal-actions">
+              <button className="secondary-button" onClick={() => setEditingUser(null)}>Cancel</button>
+              <button className="primary small" disabled={updateUser.isPending} onClick={() => updateUser.mutate({ id: editingUser.id, role: editForm.role, managerId: editForm.managerId || null })}>Save changes</button>
+            </div>
+          </section>
+        </div>
+      )}
+
       <section className="table-card">
         <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Manager</th><th>Status</th><th>Devices</th><th>Reports</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Manager</th><th>Status</th><th>Devices</th><th>Reports</th><th/></tr></thead>
           <tbody>
-            {isLoading ? <tr><td colSpan={7}>Loading users...</td></tr> : data.map(user => (
+            {isLoading ? <tr><td colSpan={8}>Loading users...</td></tr> : data.map(user => (
               <tr key={user.id}>
                 <td><b>{user.fullName}</b></td>
                 <td>{user.email}</td>
@@ -101,6 +139,7 @@ export function Users() {
                 <td><button className="link-button" onClick={() => updateUser.mutate({ id: user.id, isActive: !user.isActive })}>{user.isActive ? "Active" : "Disabled"}</button></td>
                 <td>{user._count.devices}</td>
                 <td>{user._count.reports}</td>
+                <td><button className="link-button" onClick={() => openEdit(user)}>Edit</button></td>
               </tr>
             ))}
           </tbody>
